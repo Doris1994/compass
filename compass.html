@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>compass</title>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            font-family: "Arial","Microsoft YaHei","黑体","宋体",sans-serif;
+        }
+        :root{
+            background-color: #000;
+        }
+        .clearfix::after{
+            content: '';
+            display: block;
+            clear: both;
+
+        }
+        .compass-wrap{
+            position: relative;
+            margin: 80px auto;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+        }
+        .compass-wrap .cross-line,
+        .compass-wrap .board-wrap,
+        .compass-wrap .board-wrap .line,
+        .compass-wrap .board-wrap .number,
+        .compass-wrap .board-wrap .letter{
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            transform-origin: center center;
+        }
+        .compass-wrap .cross-line .cross{
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 160px;
+            height: 2px;
+            background-color: #fff;
+            margin-left: -80px;
+        }
+        .compass-wrap .cross-line .cross::after{
+            content: '';
+            display: block;
+            width: 160px;
+            height: 2px;
+            background-color: #fff;
+            transform: rotate(90deg);
+        }
+        .compass-wrap .cross-line .needle{
+            position: absolute;
+            left: 50%;
+            top: -30px;
+            width: 4px;
+            height: 50px;
+            background-color: #fff;
+            margin-left: -2px;
+            z-index: 10;
+        }
+        .compass-wrap .board-wrap .line li{
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            width: 1px;
+            height: 20px;
+            background-color: #fff;
+            margin-left: -1px;
+            transform-origin: center 140px;
+        }
+        .compass-wrap .board-wrap .number span,
+        .compass-wrap .board-wrap .letter span{
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            color: #fff;
+            font-size: 20px;
+            line-height: 20px;
+            transform-origin: center 175px;
+        }
+        .compass-wrap .board-wrap .letter span{
+            top: 50px;
+            transform-origin: center 110px;
+        }
+        .triangle{
+            position: absolute;
+            left: 50%;
+            top: -3px;
+            margin-left: -10px;
+            width: 0;
+            height: 0;
+            border-width: 10px;
+            border-style: solid;
+            border-color: transparent transparent red transparent;
+        }
+        .show-info{
+            display: flex;
+            width: 100vw;
+            font-size: 30px;
+            color: #fff;
+        }
+        .show-info .angle,
+        .show-info .direction{
+            flex-basis: 50%;
+            line-height: 60px;
+            font-size: 50px;
+        }
+        .show-info .angle{
+            text-align: right;
+        }
+        .show-info .direction{
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="compass-wrap">
+            <div class="cross-line">
+                <div class="cross"></div>
+                <div class="needle"></div>
+            </div>
+            <div class="board-wrap" id="board">
+                <ul class="line" id="line"></ul>
+                <div class="number" id="number"></div>
+                <div class="letter" id="letter"></div>
+                <div class="triangle"></div>
+            </div>
+        </div>
+        <div class="show-info">
+            <p class="angle" id="angle">_ _°</p>
+            <p class="direction" id="direction"></p>
+        </div>
+    </div>
+    <script>
+        (function(root){
+            var oLine = document.getElementById('line');
+            var oNum = document.getElementById('number');
+            var oLetter = document.getElementById('letter');
+            var oBoard = document.getElementById('board');
+            var oAngle = document.getElementById('angle');
+            var oDirection = document.getElementById('direction');
+            var str = '', strNum = '', strLetter = '';
+            function render(){
+                for(var i = 0; i < 360; i+= 2){
+                    if (i % 30 == 0) {
+                        str += `<li style="transform: rotate(${i}deg); width: 2px; margin-left: -1px"></li>`
+                    } else {
+                        str += `<li style="transform: rotate(${i}deg);"></li>`
+                    }
+                }
+                for(var j = 0; j <= 330; j += 30){
+                    strNum += `<span style="transform: translateX(-50%) rotate(${j}deg)">${j}</span>`
+                }
+                for(var z = 0; z <= 270; z += 90){
+                    strLetter += `<span style="transform: translateX(-50%) rotate(${z}deg)">${z==0 ? 'N' : (z==90 ? 'E' : (z==180 ? 'S' : 'W'))}</span>`
+                }
+                oLine.innerHTML = str;
+                oNum.innerHTML = strNum;
+                oLetter.innerHTML = strLetter;
+            }
+            function throttle(handle, wait){
+                var lastTime = 0;
+                return function(){
+                    var nowTime = new Date().getTime();
+                    if(nowTime - lastTime > wait){
+                        handle.apply(this, arguments);
+                        lastTime = nowTime;
+                    }
+                }
+            }
+            function direction(alpha) {
+                if (alpha > 337.5 || alpha < 22.5) {
+                    return '北'
+                } else if (alpha > 45 - 22.5 && alpha < 45 + 22.5) {
+                    return '东北'
+                } else if (alpha > 90 - 22.5 && alpha < 90 + 22.5) {
+                    return '东'
+                } else if (alpha > 135 - 22.5 && alpha < 135 + 22.5) {
+                    return '东南'
+                } else if (alpha > 180 - 22.5 && alpha < 180 + 22.5) {
+                    return '南'
+                } else if (alpha > 225 - 22.5 && alpha < 225 + 22.5) {
+                    return '西南'
+                } else if (alpha > 270 - 22.5 && alpha < 270 + 22.5) {
+                    return '西'
+                } else if (alpha > 315 - 22.5 && alpha < 315 + 22.5) {
+                    return '西北'
+                }
+            }
+            if(window.DeviceOrientationEvent){
+                var ua = navigator.userAgent.toLowerCase();
+                if(/android/.test(ua)) {
+                    window.addEventListener('deviceorientationabsolute', throttle(deviceOrientationListener, 20));
+                    function deviceOrientationListener(e) {
+                        var alpha = Math.round(e.alpha);
+                        oAngle.innerHTML = (360 - alpha) + '°';
+                        oDirection.innerHTML = direction(alpha);
+                        oBoard.style.transform = 'rotate(-'+alpha+'deg)';	  
+                    }
+                } else {
+                    window.addEventListener('deviceorientation', throttle(deviceOrientationListener, 20));
+                    function deviceOrientationListener(e) {
+                        var alpha = Math.round(e.webkitCompassHeading) - 1;
+                        oAngle.innerHTML = alpha + '°';
+                        oDirection.innerHTML = direction(alpha);
+                        oBoard.style.transform = 'rotate(-'+alpha+'deg)';
+                    }
+                }
+            }else{
+                alert('你的浏览器不支持DeviceOrientationEvent')
+            }
+            root.render = function() {
+                render();
+            }
+        })(window.compass || (window.compass = {}))
+        window.compass.render()
+    </script>
+</body>
+</html>
